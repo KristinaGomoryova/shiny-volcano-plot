@@ -18,7 +18,7 @@ ui <- fluidPage(
 
 server <- function(input, output) {
   
-  differentialExpressionResults <- read.delim("input_proteins.txt", stringsAsFactors = FALSE) 
+  differentialExpressionResults <- read.delim("input_table.txt", stringsAsFactors = FALSE) 
   differentialExpressionResults["group"] <- "NS" 
   differentialExpressionResults[which(differentialExpressionResults['adj_pval']< 0.05 & abs(differentialExpressionResults["diff"]) < 1), "group"] <- "p val < 0.05" 
   differentialExpressionResults[which(differentialExpressionResults['adj_pval']> 0.05 & abs(differentialExpressionResults["diff"]) > 1), "group"] <- "|FC| > 1" 
