@@ -4,13 +4,18 @@ library(tidyverse)
 
 ui <- fluidPage(
   titlePanel("Interactive shiny volcano plot"),
-  fluidRow(
-    column(
-      width = 7,
-      plotlyOutput("volcanoPlot", height = "500px")
-    ),
-    column(
-      width = 5,
+  
+  sidebarLayout(
+    sidebarPanel(
+      sliderInput("def_logFC", 
+                  label = "Log Fold Change:",
+                  min = 0, max = 5, value = 1),
+      sliderInput("def_adj_pval", 
+                  label = "Adjusted pvalue:",
+                  min = 0, max = 2, value = 0.05, round = FALSE, step = 0.1
+      ), width = 2),
+    mainPanel(
+      plotlyOutput("VolcanoPlot"),
       dataTableOutput("selectedProteinsTable")
     )
   )
@@ -19,15 +24,17 @@ ui <- fluidPage(
 server <- function(input, output) {
   
   differentialExpressionResults <- read.delim("input_table.txt", stringsAsFactors = FALSE) 
+  
+  output$VolcanoPlot <- renderPlotly({
+    
   differentialExpressionResults["group"] <- "NS" 
-  differentialExpressionResults[which(differentialExpressionResults['adj_pval']< 0.05 & abs(differentialExpressionResults["diff"]) < 1), "group"] <- "p val < 0.05" 
-  differentialExpressionResults[which(differentialExpressionResults['adj_pval']> 0.05 & abs(differentialExpressionResults["diff"]) > 1), "group"] <- "|FC| > 1" 
-  differentialExpressionResults[which(differentialExpressionResults['adj_pval']< 0.05 & abs(differentialExpressionResults["diff"]) > 1), "group"] <- "p val < 0.05 & |FC| > 1" 
+  differentialExpressionResults[which(differentialExpressionResults['adj_pval']< input$def_adj_pval & abs(differentialExpressionResults["diff"]) < input$def_logFC), "group"] <- "p val < 0.05" 
+  differentialExpressionResults[which(differentialExpressionResults['adj_pval']> input$def_adj_pval & abs(differentialExpressionResults["diff"]) > input$def_logFC), "group"] <- "|FC| > 1" 
+  differentialExpressionResults[which(differentialExpressionResults['adj_pval']< input$def_adj_pval & abs(differentialExpressionResults["diff"]) > input$def_logFC), "group"] <- "p val < 0.05 & |FC| > 1" 
+  
   differentialExpressionResults["minusLog10Pvalue"] = -log10(differentialExpressionResults$adj_pval)
   differentialExpressionResults["tooltip"] = differentialExpressionResults$name
   
-  output$volcanoPlot <- renderPlotly({
-    
     plot <- differentialExpressionResults %>%
       ggplot(aes(x = diff,
                  y = minusLog10Pvalue,
@@ -36,7 +43,7 @@ server <- function(input, output) {
                  key = row.names(differentialExpressionResults))) +
       geom_point() +
       xlab("log fold change") +
-      ylab("-log10(P-value)")
+      ylab("-log10(adj p-value)")
     
     plot %>%
       ggplotly(tooltip = "tooltip") %>%
@@ -54,7 +61,7 @@ server <- function(input, output) {
       transmute(
         protein = name,
         `log fold change` = signif(diff, digits = 2),
-        `p-value` = signif(adj_pval, digits = 2)
+        `adj p-value` = signif(adj_pval, digits = 2)
       )
   },
   options = list(dom = "tip", pageLength = 10, searching = FALSE)
