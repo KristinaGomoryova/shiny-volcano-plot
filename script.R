@@ -15,8 +15,12 @@ ui <- fluidPage(
                   min = 0, max = 2, value = 0.05, round = FALSE, step = 0.1
       ), width = 2),
     mainPanel(
-      plotlyOutput("VolcanoPlot"),
-      dataTableOutput("selectedProteinsTable")
+      tabsetPanel(type = "tabs",
+                  tabPanel("Plot", 
+                           plotlyOutput("VolcanoPlot"),
+                           dataTableOutput("selectedProteinsTable")),
+                  tabPanel("Table", DT::dataTableOutput("allProteinsTable"))
+      )
     )
   )
 )
@@ -66,6 +70,10 @@ server <- function(input, output) {
   },
   options = list(dom = "tip", pageLength = 10, searching = FALSE)
   )
+  
+  output$allProteinsTable <- DT::renderDataTable({
+    differentialExpressionResults
+  })
 }
 
 shinyApp(ui, server, options = list(height = 600))
