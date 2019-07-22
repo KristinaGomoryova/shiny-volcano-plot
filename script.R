@@ -79,6 +79,10 @@ server <- function(input, output) {
   )
   
   output$allProteinsTable <- DT::renderDataTable({
+    differentialExpressionResults["group"] <- "NS" 
+    differentialExpressionResults[which(differentialExpressionResults['adj_pval']< input$def_adj_pval & abs(differentialExpressionResults["diff"]) < input$def_logFC), "group"] <- "p val < 0.05" 
+    differentialExpressionResults[which(differentialExpressionResults['adj_pval']> input$def_adj_pval & abs(differentialExpressionResults["diff"]) > input$def_logFC), "group"] <- "|FC| > 1" 
+    differentialExpressionResults[which(differentialExpressionResults['adj_pval']< input$def_adj_pval & abs(differentialExpressionResults["diff"]) > input$def_logFC), "group"] <- "p val < 0.05 & |FC| > 1" 
     differentialExpressionResults
   })
   
