@@ -18,8 +18,12 @@ ui <- fluidPage(
       tabsetPanel(type = "tabs",
                   tabPanel("Plot", 
                            plotlyOutput("VolcanoPlot"),
-                           dataTableOutput("selectedProteinsTable")),
-                  tabPanel("Table", DT::dataTableOutput("allProteinsTable"))
+                           dataTableOutput("selectedProteinsTable"),
+                           downloadButton("downloadData", "Download selected proteins")
+                           ),
+                  tabPanel("Table", 
+                           DT::dataTableOutput("allProteinsTable"),
+                           downloadButton("downloadDataAll", "Download table"))
       )
     )
   )
@@ -54,8 +58,7 @@ server <- function(input, output) {
       layout(dragmode = "select")
   })
   
-  output$selectedProteinsTable <- renderDataTable({
-    
+  selprots <- reactive({
     eventData <- event_data("plotly_selected")
     
     selectedData <- differentialExpressionResults %>% slice(0)
@@ -65,8 +68,12 @@ server <- function(input, output) {
       transmute(
         protein = name,
         `log fold change` = signif(diff, digits = 2),
-        `adj p-value` = signif(adj_pval, digits = 2)
+        `p-value` = signif(adj_pval, digits = 2)
       )
+  })
+  
+  output$selectedProteinsTable <- renderDataTable({
+    selprots() 
   },
   options = list(dom = "tip", pageLength = 10, searching = FALSE)
   )
@@ -74,6 +81,24 @@ server <- function(input, output) {
   output$allProteinsTable <- DT::renderDataTable({
     differentialExpressionResults
   })
+  
+  output$downloadData <- downloadHandler(
+    filename = function() {
+      paste("dataset", ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(selprots(), file, row.names = FALSE)
+    }
+  )
+  
+  output$downloadDataAll <- downloadHandler(
+    filename = function() {
+      paste("dataset", ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(differentialExpressionResults, file, row.names = FALSE)
+    }
+  )
 }
 
 shinyApp(ui, server, options = list(height = 600))
