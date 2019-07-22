@@ -12,8 +12,9 @@ ui <- fluidPage(
                   min = 0, max = 5, value = 1),
       sliderInput("def_adj_pval", 
                   label = "Adjusted pvalue:",
-                  min = 0, max = 2, value = 0.05, round = FALSE, step = 0.1
-      ), width = 2),
+                  min = 0, max = 2, value = 0.05, round = FALSE, step = 0.1),
+      downloadButton("downloadData", "Download selected proteins"),
+      width = 2),
     mainPanel(
       plotlyOutput("VolcanoPlot"),
       dataTableOutput("selectedProteinsTable")
@@ -49,9 +50,8 @@ server <- function(input, output) {
       ggplotly(tooltip = "tooltip") %>%
       layout(dragmode = "select")
   })
-  
-  output$selectedProteinsTable <- renderDataTable({
-    
+
+  selprots <- reactive({
     eventData <- event_data("plotly_selected")
     
     selectedData <- differentialExpressionResults %>% slice(0)
@@ -61,11 +61,25 @@ server <- function(input, output) {
       transmute(
         protein = name,
         `log fold change` = signif(diff, digits = 2),
-        `adj p-value` = signif(adj_pval, digits = 2)
+        `p-value` = signif(adj_pval, digits = 2)
       )
+  })
+    
+  output$selectedProteinsTable <- renderDataTable({
+    selprots() 
   },
   options = list(dom = "tip", pageLength = 10, searching = FALSE)
   )
+  
+  output$downloadData <- downloadHandler(
+    filename = function() {
+      paste("dataset", ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(selprots(), file, row.names = FALSE)
+    }
+  )
+  
 }
 
 shinyApp(ui, server, options = list(height = 600))
