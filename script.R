@@ -88,8 +88,12 @@ server <- function(input, output) {
   })
   
   output$allProteinsTable <- DT::renderDataTable({
-    table_full()
-  })
+    help_full <- table_full()
+    help_full['unlist_names'] <- vapply(strsplit(help_full$name,";"), `[`, 1, FUN.VALUE=character(1))
+    help_full['Publications'] <- paste("https://www.uniprot.org/uniprot/",help_full$unlist_names,"/publications", sep="")
+    help_full['Publications'] <- paste0("<a href='",help_full$Publications,"'>",help_full$Publications,"</a>")
+    help_full
+  }, escape = FALSE)
   
   output$static_plot <- renderPlot({
     s = input$allProteinsTable_rows_selected
