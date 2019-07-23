@@ -84,15 +84,16 @@ server <- function(input, output) {
     differentialExpressionResults[which(differentialExpressionResults['adj_pval']< input$def_adj_pval & abs(differentialExpressionResults["diff"]) < input$def_logFC), "group"] <- paste("adj.pval < ", input$def_adj_pval) 
     differentialExpressionResults[which(differentialExpressionResults['adj_pval']> input$def_adj_pval & abs(differentialExpressionResults["diff"]) > input$def_logFC), "group"] <- paste("FC > ", input$def_logFC)
     differentialExpressionResults[which(differentialExpressionResults['adj_pval']< input$def_adj_pval & abs(differentialExpressionResults["diff"]) > input$def_logFC), "group"] <- paste("adj.pval < ", input$def_adj_pval, " & FC >", input$def_logFC) 
+    
+    differentialExpressionResults['unlist_names'] <- vapply(strsplit(differentialExpressionResults$name,";"), `[`, 1, FUN.VALUE=character(1))
+    differentialExpressionResults['Publications'] <- paste("https://www.uniprot.org/uniprot/",differentialExpressionResults$unlist_names,"/publications", sep="")
+    differentialExpressionResults['Publications'] <- paste0("<a href='",differentialExpressionResults$Publications,"'>",differentialExpressionResults$Publications,"</a>")
+    differentialExpressionResults['unlist_names'] <- NULL
     differentialExpressionResults
   })
   
   output$allProteinsTable <- DT::renderDataTable({
-    help_full <- table_full()
-    help_full['unlist_names'] <- vapply(strsplit(help_full$name,";"), `[`, 1, FUN.VALUE=character(1))
-    help_full['Publications'] <- paste("https://www.uniprot.org/uniprot/",help_full$unlist_names,"/publications", sep="")
-    help_full['Publications'] <- paste0("<a href='",help_full$Publications,"'>",help_full$Publications,"</a>")
-    help_full
+    table_full()
   }, escape = FALSE)
   
   output$static_plot <- renderPlot({
@@ -118,7 +119,7 @@ server <- function(input, output) {
       paste("dataset", ".csv", sep = "")
     },
     content = function(file) {
-    write.csv(table_full, file, row.names = FALSE)
+    write.csv(table_full(), file, row.names = FALSE)
     }
   )
 }
