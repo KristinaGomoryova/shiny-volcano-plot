@@ -23,7 +23,8 @@ ui <- fluidPage(
                            ),
                   tabPanel("Table", 
                            DT::dataTableOutput("allProteinsTable"),
-                           downloadButton("downloadDataAll", "Download table"))
+                           downloadButton("downloadDataAll", "Download table"),
+                           plotOutput("static_plot"))
       )
     )
   )
@@ -89,6 +90,14 @@ server <- function(input, output) {
   output$allProteinsTable <- DT::renderDataTable({
     table_full()
   })
+  
+  output$static_plot <- renderPlot({
+    s = input$allProteinsTable_rows_selected
+    help <- as.data.frame(differentialExpressionResults[,c("diff","adj_pval")])
+    plot(x=help$diff, y= -log10(help$adj_pval), cex = 1, pch=16, col = "black", xlab = "logFC", ylab = "-log10(adj.pval)")
+    if (length(s)) points(help[s, , drop = FALSE], pch = 19, cex = 1.4, col = "blue")
+  }
+  )
   
   output$downloadData <- downloadHandler(
     filename = function() {
