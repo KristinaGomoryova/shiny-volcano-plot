@@ -78,12 +78,16 @@ server <- function(input, output) {
   options = list(dom = "tip", pageLength = 10, searching = FALSE)
   )
   
-  output$allProteinsTable <- DT::renderDataTable({
+  table_full <- reactive({
     differentialExpressionResults["group"] <- "NS" 
     differentialExpressionResults[which(differentialExpressionResults['adj_pval']< input$def_adj_pval & abs(differentialExpressionResults["diff"]) < input$def_logFC), "group"] <- "p val < 0.05" 
     differentialExpressionResults[which(differentialExpressionResults['adj_pval']> input$def_adj_pval & abs(differentialExpressionResults["diff"]) > input$def_logFC), "group"] <- "|FC| > 1" 
     differentialExpressionResults[which(differentialExpressionResults['adj_pval']< input$def_adj_pval & abs(differentialExpressionResults["diff"]) > input$def_logFC), "group"] <- "p val < 0.05 & |FC| > 1" 
     differentialExpressionResults
+  })
+  
+  output$allProteinsTable <- DT::renderDataTable({
+    table_full()
   })
   
   output$downloadData <- downloadHandler(
@@ -95,20 +99,13 @@ server <- function(input, output) {
     }
   )
   
-  table_export <- function(){
-    differentialExpressionResults["group"] <- "NS" 
-    differentialExpressionResults[which(differentialExpressionResults['adj_pval']< input$def_adj_pval & abs(differentialExpressionResults["diff"]) < input$def_logFC), "group"] <- "p val < 0.05" 
-    differentialExpressionResults[which(differentialExpressionResults['adj_pval']> input$def_adj_pval & abs(differentialExpressionResults["diff"]) > input$def_logFC), "group"] <- "|FC| > 1" 
-    differentialExpressionResults[which(differentialExpressionResults['adj_pval']< input$def_adj_pval & abs(differentialExpressionResults["diff"]) > input$def_logFC), "group"] <- "p val < 0.05 & |FC| > 1" 
-    table_export_file <- differentialExpressionResults
-  }
   
   output$downloadDataAll <- downloadHandler(
     filename = function() {
       paste("dataset", ".csv", sep = "")
     },
     content = function(file) {
-    write.csv(table_export, file, row.names = FALSE)
+    write.csv(table_full, file, row.names = FALSE)
     }
   )
 }
