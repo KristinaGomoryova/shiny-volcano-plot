@@ -12,8 +12,8 @@ ui <- fluidPage(
                   min = 0, max = 5, value = 1),
       sliderInput("def_adj_pval", 
                   label = "Adjusted pvalue:",
-                  min = 0, max = 2, value = 0.05, round = FALSE, step = 0.1
-      ), width = 2),
+                  min = 0, max = 2, value = 0.05, round = FALSE, step = 0.05
+                  ), width = 2),
     mainPanel(
       tabsetPanel(type = "tabs",
                   tabPanel("Plot", 
@@ -37,9 +37,9 @@ server <- function(input, output) {
   output$VolcanoPlot <- renderPlotly({
     
   differentialExpressionResults["group"] <- "NS" 
-  differentialExpressionResults[which(differentialExpressionResults['adj_pval']< input$def_adj_pval & abs(differentialExpressionResults["diff"]) < input$def_logFC), "group"] <- "p val < 0.05" 
-  differentialExpressionResults[which(differentialExpressionResults['adj_pval']> input$def_adj_pval & abs(differentialExpressionResults["diff"]) > input$def_logFC), "group"] <- "|FC| > 1" 
-  differentialExpressionResults[which(differentialExpressionResults['adj_pval']< input$def_adj_pval & abs(differentialExpressionResults["diff"]) > input$def_logFC), "group"] <- "p val < 0.05 & |FC| > 1" 
+  differentialExpressionResults[which(differentialExpressionResults['adj_pval']< input$def_adj_pval & abs(differentialExpressionResults["diff"]) < input$def_logFC), "group"] <- paste("adj.pval < ", input$def_adj_pval)
+  differentialExpressionResults[which(differentialExpressionResults['adj_pval']> input$def_adj_pval & abs(differentialExpressionResults["diff"]) > input$def_logFC), "group"] <- paste("FC > ", input$def_logFC) 
+  differentialExpressionResults[which(differentialExpressionResults['adj_pval']< input$def_adj_pval & abs(differentialExpressionResults["diff"]) > input$def_logFC), "group"] <- paste("adj.pval < ", input$def_adj_pval, " & FC >", input$def_logFC) 
   
   differentialExpressionResults["minusLog10Pvalue"] = -log10(differentialExpressionResults$adj_pval)
   differentialExpressionResults["tooltip"] = differentialExpressionResults$name
@@ -81,9 +81,9 @@ server <- function(input, output) {
   
   table_full <- reactive({
     differentialExpressionResults["group"] <- "NS" 
-    differentialExpressionResults[which(differentialExpressionResults['adj_pval']< input$def_adj_pval & abs(differentialExpressionResults["diff"]) < input$def_logFC), "group"] <- "p val < 0.05" 
-    differentialExpressionResults[which(differentialExpressionResults['adj_pval']> input$def_adj_pval & abs(differentialExpressionResults["diff"]) > input$def_logFC), "group"] <- "|FC| > 1" 
-    differentialExpressionResults[which(differentialExpressionResults['adj_pval']< input$def_adj_pval & abs(differentialExpressionResults["diff"]) > input$def_logFC), "group"] <- "p val < 0.05 & |FC| > 1" 
+    differentialExpressionResults[which(differentialExpressionResults['adj_pval']< input$def_adj_pval & abs(differentialExpressionResults["diff"]) < input$def_logFC), "group"] <- paste("adj.pval < ", input$def_adj_pval) 
+    differentialExpressionResults[which(differentialExpressionResults['adj_pval']> input$def_adj_pval & abs(differentialExpressionResults["diff"]) > input$def_logFC), "group"] <- paste("FC > ", input$def_logFC)
+    differentialExpressionResults[which(differentialExpressionResults['adj_pval']< input$def_adj_pval & abs(differentialExpressionResults["diff"]) > input$def_logFC), "group"] <- paste("adj.pval < ", input$def_adj_pval, " & FC >", input$def_logFC) 
     differentialExpressionResults
   })
   
