@@ -14,6 +14,7 @@ ui <- fluidPage(
                   label = "Adjusted pvalue:",
                   min = 0, max = 2, value = 0.05, round = FALSE, step = 0.05
                   ), width = 2),
+      downloadButton("downloadData", "Download selected proteins"),
     mainPanel(
       tabsetPanel(type = "tabs",
                   tabPanel("Plot", 
@@ -58,8 +59,9 @@ server <- function(input, output) {
       ggplotly(tooltip = "tooltip") %>%
       layout(dragmode = "select")
   })
-  
-  selprots <- reactive({
+
+ 
+ selprots <- reactive({
     eventData <- event_data("plotly_selected")
     
     selectedData <- differentialExpressionResults %>% slice(0)
@@ -72,13 +74,14 @@ server <- function(input, output) {
         `p-value` = signif(adj_pval, digits = 2)
       )
   })
-  
+
   output$selectedProteinsTable <- renderDataTable({
     selprots() 
   },
   options = list(dom = "tip", pageLength = 10, searching = FALSE)
   )
   
+
   table_full <- reactive({
     differentialExpressionResults["group"] <- "NS" 
     differentialExpressionResults[which(differentialExpressionResults['adj_pval']< input$def_adj_pval & abs(differentialExpressionResults["diff"]) < input$def_logFC), "group"] <- paste("adj.pval < ", input$def_adj_pval) 
@@ -113,6 +116,7 @@ server <- function(input, output) {
     }
   )
   
+
   
   output$downloadDataAll <- downloadHandler(
     filename = function() {
