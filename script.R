@@ -13,15 +13,14 @@ ui <- fluidPage(
       sliderInput("def_adj_pval", 
                   label = "Adjusted pvalue:",
                   min = 0, max = 2, value = 0.05, round = FALSE, step = 0.05
-                  ), width = 2),
-      downloadButton("downloadData", "Download selected proteins"),
+      ), width = 2),
     mainPanel(
       tabsetPanel(type = "tabs",
                   tabPanel("Plot", 
                            plotlyOutput("VolcanoPlot"),
                            dataTableOutput("selectedProteinsTable"),
                            downloadButton("downloadData", "Download selected proteins")
-                           ),
+                  ),
                   tabPanel("Table", 
                            DT::dataTableOutput("allProteinsTable"),
                            downloadButton("downloadDataAll", "Download table"),
@@ -37,14 +36,14 @@ server <- function(input, output) {
   
   output$VolcanoPlot <- renderPlotly({
     
-  differentialExpressionResults["group"] <- "NS" 
-  differentialExpressionResults[which(differentialExpressionResults['adj_pval']< input$def_adj_pval & abs(differentialExpressionResults["diff"]) < input$def_logFC), "group"] <- paste("adj.pval < ", input$def_adj_pval)
-  differentialExpressionResults[which(differentialExpressionResults['adj_pval']> input$def_adj_pval & abs(differentialExpressionResults["diff"]) > input$def_logFC), "group"] <- paste("FC > ", input$def_logFC) 
-  differentialExpressionResults[which(differentialExpressionResults['adj_pval']< input$def_adj_pval & abs(differentialExpressionResults["diff"]) > input$def_logFC), "group"] <- paste("adj.pval < ", input$def_adj_pval, " & FC >", input$def_logFC) 
-  
-  differentialExpressionResults["minusLog10Pvalue"] = -log10(differentialExpressionResults$adj_pval)
-  differentialExpressionResults["tooltip"] = differentialExpressionResults$name
-  
+    differentialExpressionResults["group"] <- "NS" 
+    differentialExpressionResults[which(differentialExpressionResults['adj_pval']< input$def_adj_pval & abs(differentialExpressionResults["diff"]) < input$def_logFC), "group"] <- paste("adj.pval < ", input$def_adj_pval)
+    differentialExpressionResults[which(differentialExpressionResults['adj_pval']> input$def_adj_pval & abs(differentialExpressionResults["diff"]) > input$def_logFC), "group"] <- paste("FC > ", input$def_logFC) 
+    differentialExpressionResults[which(differentialExpressionResults['adj_pval']< input$def_adj_pval & abs(differentialExpressionResults["diff"]) > input$def_logFC), "group"] <- paste("adj.pval < ", input$def_adj_pval, " & FC >", input$def_logFC) 
+    
+    differentialExpressionResults["minusLog10Pvalue"] = -log10(differentialExpressionResults$adj_pval)
+    differentialExpressionResults["tooltip"] = differentialExpressionResults$name
+    
     plot <- differentialExpressionResults %>%
       ggplot(aes(x = diff,
                  y = minusLog10Pvalue,
@@ -59,9 +58,8 @@ server <- function(input, output) {
       ggplotly(tooltip = "tooltip") %>%
       layout(dragmode = "select")
   })
-
- 
- selprots <- reactive({
+  
+  selprots <- reactive({
     eventData <- event_data("plotly_selected")
     
     selectedData <- differentialExpressionResults %>% slice(0)
@@ -74,14 +72,13 @@ server <- function(input, output) {
         `p-value` = signif(adj_pval, digits = 2)
       )
   })
-
+  
   output$selectedProteinsTable <- renderDataTable({
     selprots() 
   },
   options = list(dom = "tip", pageLength = 10, searching = FALSE)
   )
   
-
   table_full <- reactive({
     differentialExpressionResults["group"] <- "NS" 
     differentialExpressionResults[which(differentialExpressionResults['adj_pval']< input$def_adj_pval & abs(differentialExpressionResults["diff"]) < input$def_logFC), "group"] <- paste("adj.pval < ", input$def_adj_pval) 
@@ -116,14 +113,13 @@ server <- function(input, output) {
     }
   )
   
-
   
   output$downloadDataAll <- downloadHandler(
     filename = function() {
       paste("dataset", ".csv", sep = "")
     },
     content = function(file) {
-    write.csv(table_full(), file, row.names = FALSE)
+      write.csv(table_full(), file, row.names = FALSE)
     }
   )
 }
